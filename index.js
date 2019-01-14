@@ -67,7 +67,7 @@ module.exports = function leafletImage(map, callback) {
         if (err) throw err;
         layers.forEach(function (layer) {
             if (layer && layer.canvas) {
-                ctx.drawImage(layer.canvas, 0, 0);
+                ctx.drawImage(layer.canvas, 0, 0, canvas.width, canvas.height);
             }
         });
         done();
@@ -82,9 +82,12 @@ module.exports = function leafletImage(map, callback) {
         canvas.height = dimensions.y;
 
         var ctx = canvas.getContext('2d'),
-            bounds = map.getPixelBounds(),
+            bounds = layer._getTiledPixelBounds(map.getCenter()),
             zoom = map.getZoom(),
             tileSize = layer.options.tileSize;
+
+        canvas.width = bounds.max.x - bounds.min.x;
+        canvas.height = bounds.max.y - bounds.min.y;
 
         if (zoom > layer.options.maxZoom ||
             zoom < layer.options.minZoom ||
@@ -94,9 +97,7 @@ module.exports = function leafletImage(map, callback) {
             return callback();
         }
 
-        var tileBounds = L.bounds(
-            bounds.min.divideBy(tileSize)._floor(),
-            bounds.max.divideBy(tileSize)._floor()),
+        var tileBounds = layer._pxBoundsToTileRange(bounds),
             tiles = [],
             j, i,
             tileQueue = new queue(1);

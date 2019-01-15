@@ -66,6 +66,13 @@ module.exports = function leafletImage(map, callback) {
 
     function layersDone(err, layers) {
         if (err) throw err;
+        var layerOverridingSize = layers.find(function (layer) {
+            return layer.canvas && layer.options.lImageSizeOverride;
+        });
+        if (layerOverridingSize) {
+            canvas.width = layerOverridingSize.canvas.width;
+            canvas.height = layerOverridingSize.canvas.height;
+        }
         layers.forEach(function (layer) {
             if (layer && layer.canvas) {
                 ctx.drawImage(layer.canvas, 0, 0, canvas.width, canvas.height);
@@ -79,16 +86,15 @@ module.exports = function leafletImage(map, callback) {
         var isCanvasLayer = (L.TileLayer.Canvas && layer instanceof L.TileLayer.Canvas),
             canvas = document.createElement('canvas');
 
-        canvas.width = dimensions.x;
-        canvas.height = dimensions.y;
-
         var ctx = canvas.getContext('2d'),
             bounds = layer._getTiledPixelBounds(map.getCenter()),
             zoom = map.getZoom(),
+            tileScale = layer.options.lImageTileScale || 1,
             tileSize = layer.options.tileSize;
 
-        canvas.width = bounds.max.x - bounds.min.x;
-        canvas.height = bounds.max.y - bounds.min.y;
+        canvas.width = (bounds.max.x - bounds.min.x) * tileScale;
+        canvas.height = (bounds.max.y - bounds.min.y) * tileScale;
+        ctx.scale(tileScale, tileScale);
 
         if (zoom > layer.options.maxZoom ||
             zoom < layer.options.minZoom ||
@@ -169,7 +175,7 @@ module.exports = function leafletImage(map, callback) {
 
         function tileQueueFinish(err, data) {
             data.forEach(drawTile);
-            callback(null, { canvas: canvas });
+            callback(null, { canvas: canvas, options: layer.options });
         }
 
         function drawTile(d) {

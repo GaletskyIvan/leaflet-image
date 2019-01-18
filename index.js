@@ -91,8 +91,8 @@ module.exports = function leafletImage(map, callback) {
             tileScale = layer.options.lImageTileScale || 1,
             tileSize = layer.options.tileSize;
 
-        canvas.width = (bounds.max.x - bounds.min.x) * tileScale;
-        canvas.height = (bounds.max.y - bounds.min.y) * tileScale;
+        canvas.width = Math.round((bounds.max.x - bounds.min.x) * tileScale);
+        canvas.height = Math.round((bounds.max.y - bounds.min.y) * tileScale);
         ctx.scale(tileScale, tileScale);
 
         if (zoom > layer.options.maxZoom ||
